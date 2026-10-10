@@ -1,0 +1,149 @@
+/* ---------- Login overlay (glass) ---------- */
+#loginOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 11, 20, 0.75);
+    backdrop-filter: blur(var(--blur-lg));
+    -webkit-backdrop-filter: blur(var(--blur-lg));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.login-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-md));
+    -webkit-backdrop-filter: blur(var(--blur-md));
+    border: 1px solid var(--glass-border-strong);
+    padding: 36px 32px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-elevated);
+    width: 380px;
+    max-width: 92%;
+    color: var(--text-primary);
+    animation: cardEnter 0.5s ease-out;
+}
+
+@keyframes cardEnter {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-card h2 {
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.login-card input[type="text"],
+.login-card input[type="password"] {
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(var(--blur-sm));
+    -webkit-backdrop-filter: blur(var(--blur-sm));
+    color: var(--text-primary);
+    font-size: 15px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.login-card input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.remember-me-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.remember-me-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.login-card button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+    margin-top: 8px;
+    box-shadow: 0 4px 20px var(--primary-glow);
+}
+
+.login-card button:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 28px var(--primary-glow);
+}
+
+.login-card button:active {
+    transform: scale(0.98);
+}
+
+.login-card button:disabled {
+    background: #475569;
+    box-shadow: none;
+    cursor: not-allowed;
+    filter: none;
+}
+
+.login-error {
+    color: #fca5a5;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 12px;
+    display: none;
+}
+
+.login-info {
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-align: center;
+    margin-top: 18px;
+    line-height: 1.6;
+    text-shadow: var(--text-shadow-soft);
+}
+
+.login-card input::placeholder {
+    color: var(--text-placeholder);
+    opacity: 1;
+}
+
+/* Fix browser autofill background issue */
+.login-card input:-webkit-autofill,
+.login-card input:-webkit-autofill:hover,
+.login-card input:-webkit-autofill:focus,
+.login-card input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}

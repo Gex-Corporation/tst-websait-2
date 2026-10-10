@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কাস্টমার খাতা — Invoice Pro</title>
+    <link rel="stylesheet" href="../css/pages.css">
+    <link rel="stylesheet" href="../css/ledger.css">
+    <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"}}</script>
+</head>
+<body>
+<div id="pageApp">
+    <header id="pageTopbar"></header>
+    <main id="pageContent">
+
+        <!-- Stats -->
+        <div class="stats-grid mb-24">
+            <div class="stat-card blue"><div class="stat-card-top"><div><div class="stat-label">মোট কাস্টমার</div><div class="stat-value" id="statTotalCust">—</div></div><div class="stat-icon">👥</div></div></div>
+            <div class="stat-card orange"><div class="stat-card-top"><div><div class="stat-label">বাকি আছে</div><div class="stat-value" id="statHasDue">—</div></div><div class="stat-icon">⚠️</div></div></div>
+            <div class="stat-card green"><div class="stat-card-top"><div><div class="stat-label">মোট বিক্রয়</div><div class="stat-value" id="statTotalSales">—</div></div><div class="stat-icon">💰</div></div></div>
+            <div class="stat-card red"><div class="stat-card-top"><div><div class="stat-label">মোট বাকি</div><div class="stat-value" id="statTotalDue">—</div></div><div class="stat-icon">📋</div></div></div>
+        </div>
+
+        <!-- Filter / Search -->
+        <div class="section-header">
+            <div class="section-title">📒 কাস্টমার খাতা</div>
+            <div class="section-actions" style="flex-wrap:wrap;">
+                <div class="search-bar"><input type="text" id="ledgerSearch" placeholder="কাস্টমার খুঁজুন..."></div>
+                <select class="filter-select" id="mpoFilterLedger"><option value="">সব MPO</option></select>
+                <select class="filter-select" id="dueFilter">
+                    <option value="">সব কাস্টমার</option>
+                    <option value="due">শুধু বাকি আছে</option>
+                    <option value="clear">পরিশোধিত</option>
+                </select>
+                <button class="btn" id="ledgerRefreshBtn">🔄 রিফ্রেশ</button>
+            </div>
+        </div>
+
+        <!-- Customer Cards Grid -->
+        <div class="grid-auto" id="ledgerGrid">
+            <div class="loading-center" style="grid-column:1/-1;min-height:200px"><div class="spinner"></div><span>লোড হচ্ছে...</span></div>
+        </div>
+    </main>
+</div>
+
+<!-- ====== CUSTOMER PROFILE MODAL ====== -->
+<div class="modal-overlay hidden" id="customerProfileModal">
+    <div class="modal-box wide">
+        <div class="modal-header">
+            <div class="modal-title" id="profileModalTitle">📒 কাস্টমার প্রোফাইল</div>
+            <button class="modal-close" id="closeProfileModal">✕</button>
+        </div>
+        <div class="modal-body" id="profileModalBody"></div>
+    </div>
+</div>
+
+<!-- ====== ADD TRANSACTION MODAL ====== -->
+<div class="modal-overlay hidden" id="addTxnModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title" id="addTxnTitle">💰 লেনদেন যোগ করুন</div>
+            <button class="modal-close" id="closeTxnModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">পরিমাণ (টাকা)</label>
+                <input type="number" class="form-input" id="txnAmount" placeholder="০" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label class="form-label">নোট (ঐচ্ছিক)</label>
+                <input type="text" class="form-input" id="txnNote" placeholder="কারণ লিখুন">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelTxnModal">বাতিল</button>
+            <button class="btn btn-primary" id="saveTxnBtn">✅ সেভ করুন</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="../js/ledger.js"></script>
+</body>
+</html>
