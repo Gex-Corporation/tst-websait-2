@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPO's তালিকা — Invoice Pro</title>
+    <meta name="description" content="সকল MPO ও Sales Representative এর বিস্তারিত তথ্য — Invoice Pro Admin">
+    <link rel="stylesheet" href="../css/pages.css">
+    <link rel="stylesheet" href="../css/mpo.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app":       "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+</head>
+<body>
+<div id="pageApp">
+
+    <!-- ====== TOPBAR ====== -->
+    <header id="pageTopbar"></header>
+
+    <!-- ====== CONTENT ====== -->
+    <main id="pageContent">
+
+        <!-- ====== VIEW: MPO LIST ====== -->
+        <div id="viewMPOList">
+
+            <!-- Stats Row -->
+            <div class="stats-grid mb-24">
+                <div class="stat-card purple">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">মোট MPO</div><div class="stat-value" id="statMPOCount">—</div></div>
+                        <div class="stat-icon">👥</div>
+                    </div>
+                    <div class="stat-footer">সকল সেলস রিপ্রেজেনটেটিভ</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">মোট বিক্রয়</div><div class="stat-value" id="statTotalSales">—</div></div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                    <div class="stat-footer">সকল MPO মিলে</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">মোট বাকি</div><div class="stat-value" id="statTotalDue">—</div></div>
+                        <div class="stat-icon">⚠️</div>
+                    </div>
+                    <div class="stat-footer">সকল MPO থেকে বকেয়া</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">মোট ইনভয়েস</div><div class="stat-value" id="statTotalInv">—</div></div>
+                        <div class="stat-icon">🧾</div>
+                    </div>
+                    <div class="stat-footer">সবার সব ইনভয়েস</div>
+                </div>
+            </div>
+
+            <!-- MPO List Header -->
+            <div class="section-header">
+                <div class="section-title">👤 MPO তালিকা</div>
+                <div class="section-actions">
+                    <div class="search-bar">
+                        <input type="text" id="mpoSearch" placeholder="MPO নাম খুঁজুন...">
+                    </div>
+                    <button class="btn btn-primary" id="createUserBtn">➕ নতুন MPO</button>
+                    <button class="btn" id="mpoRefreshBtn">🔄 রিফ্রেশ</button>
+                </div>
+            </div>
+
+            <!-- MPO Cards Grid -->
+            <div class="grid-auto" id="mpoCardGrid">
+                <div class="loading-center" style="grid-column:1/-1;min-height:200px">
+                    <div class="spinner"></div><span>MPO তালিকা লোড হচ্ছে...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== VIEW: MPO DETAIL ====== -->
+        <div id="viewMPODetail" style="display:none;">
+            <!-- Back + Header -->
+            <div class="section-header" style="margin-bottom:24px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="back-btn" id="backToListBtn" title="তালিকায় ফিরুন">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <div>
+                        <h2 class="section-title" id="detailMPOName">MPO Details</h2>
+                        <div class="text-muted text-small" id="detailMPOMeta"></div>
+                    </div>
+                </div>
+                <div class="section-actions">
+                    <button class="btn btn-warning" id="remoteClearCacheBtn">🔄 Cache Clear</button>
+                    <button class="btn btn-danger" id="deleteMPOBtn">🗑️ MPO ডিলেট</button>
+                </div>
+            </div>
+
+            <!-- MPO Summary Cards -->
+            <div class="stats-grid mb-24" id="mpoDetailStats">
+                <div class="stat-card green">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">মোট বিক্রয়</div><div class="stat-value" id="mpoStatSales">—</div></div>
+                        <div class="stat-icon">💰</div>
+                    </div>
+                </div>
+                <div class="stat-card teal">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">কাস্টমার কালেকশন</div><div class="stat-value" id="mpoStatCustPaid">৳০</div></div>
+                        <div class="stat-icon">💵</div>
+                    </div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">কালেকশন</div><div class="stat-value" id="mpoStatPaid">—</div></div>
+                        <div class="stat-icon">✅</div>
+                    </div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">বাকি</div><div class="stat-value" id="mpoStatDue">—</div></div>
+                        <div class="stat-icon">⚠️</div>
+                    </div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-card-top">
+                        <div><div class="stat-label">ইনভয়েস সংখ্যা</div><div class="stat-value" id="mpoStatInvCount">—</div></div>
+                        <div class="stat-icon">🧾</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Target & Performance Card -->
+            <div class="monthly-target-card mb-24" id="mpoMonthlySection">
+                <div class="mt-card-header">
+                    <div class="mt-header-left">
+                        <div class="mt-title-badge">🎯 মাসিক টার্গেট ও হিসাব</div>
+                        <div class="mt-month-selector-wrap">
+                            <select id="monthlySelect" class="mt-select">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-header-actions">
+                        <button class="btn btn-sm" id="syncMonthlyDataBtn" title="ইনভয়েস থেকে মাসিক হিসাব রি-সিঙ্ক করুন">🔄 সিঙ্ক</button>
+                        <button class="btn btn-sm btn-primary" id="setMonthlyTargetBtn">✏️ টার্গেট সেট</button>
+                    </div>
+                </div>
+
+                <div class="mt-grid">
+                    <div class="mt-stat-box green">
+                        <div class="mt-box-label">মাসের মোট বিক্রয়</div>
+                        <div class="mt-box-value" id="mtMonthSales">৳০</div>
+                        <div class="mt-box-sub" id="mtMonthSalesSub">চলতি মাসের বিক্রয়</div>
+                    </div>
+                    <div class="mt-stat-box teal">
+                        <div class="mt-box-label">মাসের কাস্টমার কালেকশন</div>
+                        <div class="mt-box-value" id="mtMonthCustPaid">৳০</div>
+                        <div class="mt-box-sub" id="mtMonthCustPaidSub">চলতি মাসে কাস্টমার আদায়</div>
+                    </div>
+                    <div class="mt-stat-box blue">
+                        <div class="mt-box-label">মাসের জমা কালেকশন</div>
+                        <div class="mt-box-value" id="mtMonthPaid">৳০</div>
+                        <div class="mt-box-sub" id="mtMonthPaidSub">চলতি মাসে অফিসে জমা</div>
+                    </div>
+                    <div class="mt-stat-box purple">
+                        <div class="mt-box-label">ইনভয়েস শুরু - শেষ</div>
+                        <div class="mt-box-value" id="mtInvRange">—</div>
+                        <div class="mt-box-sub" id="mtInvRangeSub">প্রথম থেকে শেষ ইনভয়েস</div>
+                    </div>
+                    <div class="mt-stat-box purple">
+                        <div class="mt-box-label">মাসের ইনভয়েস সংখ্যা</div>
+                        <div class="mt-box-value" id="mtMonthInvCount">০</div>
+                        <div class="mt-box-sub" id="mtMonthInvCountSub">এই মাসে তৈরিকৃত</div>
+                    </div>
+                    <div class="mt-stat-box orange">
+                        <div class="mt-box-label">মাসিক টার্গেট</div>
+                        <div class="mt-box-value" id="mtMonthTarget">৳০</div>
+                        <div class="mt-box-sub" id="mtMonthTargetPercent">০% অর্জিত</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mt-progress-wrap">
+                    <div class="mt-progress-header">
+                        <span id="mtProgressLabel">টার্গেট অগ্রগতি</span>
+                        <span id="mtProgressValue">০%</span>
+                    </div>
+                    <div class="mt-progress-bar">
+                        <div class="mt-progress-fill" id="mtProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Collapsible / Mini History of all months -->
+                <div class="mt-history-toggle" id="mtHistoryToggle">
+                    <span>📅 সকল মাসের হিসাব হিস্ট্রি দেখুন</span>
+                    <span class="mt-toggle-icon" id="mtToggleIcon">▼</span>
+                </div>
+                <div class="mt-history-wrap hidden" id="mtHistoryWrap">
+                    <div class="table-wrap">
+                        <table class="data-table" id="mtHistoryTable">
+                            <thead>
+                                <tr>
+                                    <th>মাস</th>
+                                    <th>বিক্রয়</th>
+                                    <th>কাস্টমার কালেকশন</th>
+                                    <th>অফিস জমা</th>
+                                    <th>ইনভয়েস শুরু - শেষ</th>
+                                    <th>মোট ইনভয়েস</th>
+                                    <th>টার্গেট</th>
+                                    <th>অগ্রগতি</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mtHistoryTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="mpo-tabs" id="mpoDetailTabs">
+                <button class="mpo-tab active" data-tab="shopInfo">🏪 Shop Info</button>
+                <button class="mpo-tab" data-tab="salesHistory">📈 Sales History</button>
+                <button class="mpo-tab" data-tab="accounting">💰 Accounting</button>
+            </div>
+
+            <!-- Tab: Shop Info -->
+            <div class="mpo-tab-content" id="tabShopInfo">
+                <div class="section-header" style="margin-top:16px;">
+                    <div class="section-title">🏪 কাস্টমার / দোকান তথ্য</div>
+                    <div class="section-actions">
+                        <button class="btn btn-sm" id="exportShopInfoBtn">⬇️ Export</button>
+                        <label class="btn btn-sm" style="cursor:pointer;">
+                            ⬆️ Import <input type="file" id="importShopInfoInput" accept=".json" style="display:none">
+                        </label>
+                        <button class="btn btn-sm btn-danger" id="deleteAllCustomersBtn">🗑️ সব মুছুন</button>
+                        <button class="btn btn-sm" id="refreshShopInfoBtn">🔄</button>
+                    </div>
+                </div>
+                <div class="search-bar mb-16" style="max-width:100%">
+                    <input type="text" id="shopInfoSearch" placeholder="কাস্টমার/দোকান খুঁজুন...">
+                </div>
+                <div class="card">
+                    <div class="card-body no-pad">
+                        <div class="table-wrap">
+                            <table class="data-table" id="shopInfoTable">
+                                <thead><tr>
+                                    <th>Bill To (কাস্টমার)</th>
+                                    <th>Ship To (ঠিকানা)</th>
+                                    <th>ফোন</th>
+                                    <th>বিক্রয়</th>
+                                    <th>কালেকশন</th>
+                                    <th>বাকি</th>
+                                    <th>অ্যাকশন</th>
+                                </tr></thead>
+                                <tbody id="shopInfoTableBody">
+                                    <tr><td colspan="7"><div class="loading-center"><div class="spinner"></div></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Sales History -->
+            <div class="mpo-tab-content" id="tabSalesHistory" style="display:none;">
+                <div class="section-header" style="margin-top:16px;">
+                    <div class="section-title">📈 Sales History</div>
+                    <button class="btn btn-sm" id="refreshSalesHistoryBtn">🔄 রিফ্রেশ</button>
+                </div>
+                <div class="card">
+                    <div class="card-body no-pad">
+                        <div class="table-wrap">
+                            <table class="data-table" id="salesHistoryTable">
+                                <thead><tr>
+                                    <th>তারিখ</th>
+                                    <th>ইনভয়েস নং</th>
+                                    <th>কাস্টমার</th>
+                                    <th>পরিমাণ</th>
+                                    <th>অ্যাকশন</th>
+                                </tr></thead>
+                                <tbody id="salesHistoryTableBody">
+                                    <tr><td colspan="5"><div class="loading-center"><div class="spinner"></div></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="salesHistoryLoadMoreWrap" style="text-align:center;padding:16px;display:none;">
+                            <button class="btn btn-primary" id="salesHistoryLoadMoreBtn">আরও দেখুন</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Accounting (অফিস জমা / কালেকশন লেনদেন ইতিহাস) -->
+            <div class="mpo-tab-content" id="tabAccounting" style="display:none;">
+                <div class="section-header" style="margin-top:16px;">
+                    <div>
+                        <div class="section-title">💰 অফিস কালেকশন ও জমা ইতিহাস</div>
+                        <div class="text-muted text-small">এমপিও অফিসে মালিককে যে টাকা জমা দিয়েছেন তার বিস্তারিত লেনদেন স্টেটমেন্ট</div>
+                    </div>
+                    <div class="section-actions">
+                        <button class="btn btn-success" id="openAddPaymentModalBtn">➕ টাকা জমা নিন</button>
+                        <button class="btn btn-sm" id="refreshAccountingBtn">🔄 রিফ্রেশ</button>
+                    </div>
+                </div>
+
+                <!-- Accounting Summary Mini Cards -->
+                <div class="stats-grid mb-16" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                    <div class="stat-card blue" style="padding:14px;">
+                        <div class="stat-label">মোট জমা (আজীবন)</div>
+                        <div class="stat-value" id="accSummaryTotalPaid" style="font-size:20px;color:#60a5fa;">৳০</div>
+                    </div>
+                    <div class="stat-card teal" style="padding:14px;">
+                        <div class="stat-label">কাস্টমার কালেকশন</div>
+                        <div class="stat-value" id="accSummaryCustPaid" style="font-size:20px;color:#2dd4bf;">৳০</div>
+                    </div>
+                    <div class="stat-card orange" style="padding:14px;">
+                        <div class="stat-label">বর্তমান বাকি (বকেয়া)</div>
+                        <div class="stat-value" id="accSummaryDue" style="font-size:20px;color:var(--orange2);">৳০</div>
+                    </div>
+                    <div class="stat-card purple" style="padding:14px;">
+                        <div class="stat-label">মোট জমা এন্ট্রি</div>
+                        <div class="stat-value" id="accSummaryEntryCount" style="font-size:20px;color:#c084fc;">০টি</div>
+                    </div>
+                </div>
+
+                <!-- Accounting Statement Table -->
+                <div class="card">
+                    <div class="card-body no-pad">
+                        <div class="table-wrap">
+                            <table class="data-table" id="accountingTable">
+                                <thead>
+                                    <tr>
+                                        <th>তারিখ</th>
+                                        <th>জমার পরিমাণ</th>
+                                        <th>বিবরণ / নোট</th>
+                                        <th>এন্ট্রি সময়</th>
+                                        <th style="text-align:center;">অ্যাকশন</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="accountingTableBody">
+                                    <tr><td colspan="5"><div class="loading-center"><div class="spinner"></div></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="accountingLoadMoreWrap" style="text-align:center;padding:16px;display:none;">
+                            <button class="btn btn-primary" id="accountingLoadMoreBtn">⬇️ আরও দেখুন</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ====== CREATE USER MODAL ====== -->
+<div class="modal-overlay hidden" id="createUserModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title">➕ নতুন MPO তৈরি</div>
+            <button class="modal-close" id="closeCreateUser">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Username (MPO ID)</label>
+                <input type="text" class="form-input" id="newUsername" placeholder="ইংরেজিতে username দিন" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">পাসওয়ার্ড</label>
+                <input type="text" class="form-input" id="newPassword" placeholder="পাসওয়ার্ড দিন" autocomplete="off">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelCreateUser">বাতিল</button>
+            <button class="btn btn-primary" id="submitCreateUser">✅ তৈরি করুন</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ====== SET MONTHLY TARGET MODAL ====== -->
+<div class="modal-overlay hidden" id="setTargetModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title">🎯 মাসিক টার্গেট নির্ধারণ</div>
+            <button class="modal-close" id="closeSetTarget">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">মাস</label>
+                <input type="text" class="form-input" id="targetMonthDisplay" readonly style="opacity:0.8;cursor:not-allowed">
+            </div>
+            <div class="form-group">
+                <label class="form-label">টার্গেট বিক্রয়ের পরিমাণ (টাকা)</label>
+                <input type="number" class="form-input" id="targetAmountInput" placeholder="যেমন: 200000" min="0" step="1000">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelSetTarget">বাতিল</button>
+            <button class="btn btn-primary" id="saveSetTarget">✅ টার্গেট সেভ করুন</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====== ADD MPO PAYMENT MODAL (অফিস জমা) ====== -->
+<div class="modal-overlay hidden" id="addMPOPaymentModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title" id="addMPOPaymentModalTitle">💰 অফিসে টাকা জমা গ্রহণ</div>
+            <button class="modal-close" id="closeAddMPOPayment">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">জমার পরিমাণ (টাকা) <span style="color:var(--red2)">*</span></label>
+                <input type="number" class="form-input" id="mpoPaymentAmount" placeholder="টাকার পরিমাণ লিখুন" min="1" step="any" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label class="form-label">জমার তারিখ</label>
+                <input type="date" class="form-input" id="mpoPaymentDate">
+            </div>
+            <div class="form-group">
+                <label class="form-label">বিবরণ / নোট (ঐচ্ছিক)</label>
+                <input type="text" class="form-input" id="mpoPaymentNote" placeholder="যেমন: অফিস ক্যাশ জমা / ব্যাংক ড্রাফট" autocomplete="off">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelAddMPOPayment">বাতিল</button>
+            <button class="btn btn-success" id="submitAddMPOPayment">✓ জমা নিশ্চিত করুন</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="../js/mpo.js"></script>
+</body>
+</html>

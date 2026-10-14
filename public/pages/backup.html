@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ব্যাকআপ — Invoice Pro</title>
+    <link rel="stylesheet" href="../css/pages.css">
+    <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"}}</script>
+</head>
+<body>
+<div id="pageApp">
+    <header id="pageTopbar"></header>
+    <main id="pageContent" style="max-width:900px;">
+
+        <!-- Local Cache Monitor -->
+        <div class="section-header mb-16">
+            <div class="section-title">💾 ব্যাকআপ ও ক্যাশ ব্যবস্থাপনা</div>
+        </div>
+
+        <!-- Storage Stats -->
+        <div class="stats-grid mb-24" id="storageStats">
+            <div class="stat-card blue">
+                <div class="stat-card-top"><div><div class="stat-label">মোট ক্যাশ</div><div class="stat-value" id="statTotalCache">—</div></div><div class="stat-icon">💾</div></div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-card-top"><div><div class="stat-label">ক্যাশ কী</div><div class="stat-value" id="statCacheKeys">—</div></div><div class="stat-icon">🔑</div></div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-card-top"><div><div class="stat-label">পণ্য ক্যাশ</div><div class="stat-value" id="statProdCache">—</div></div><div class="stat-icon">🛍️</div></div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-card-top"><div><div class="stat-label">Monitor ক্যাশ</div><div class="stat-value" id="statMonCache">—</div></div><div class="stat-icon">📊</div></div>
+            </div>
+        </div>
+
+        <!-- Backup Section -->
+        <div class="card mb-24">
+            <div class="card-header"><div class="card-title">💾 ডেটা ব্যাকআপ ও রিস্টোর (Backup & Restore)</div></div>
+            <div class="card-body">
+                <input type="file" id="importFile" style="display:none;" accept="application/json">
+                
+                <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:11px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Full Website Backup & Restore</div>
+                        <div style="font-size:12px;color:var(--text-muted);">সম্পূর্ণ ওয়েবসাইটের সমস্ত কালেকশন ও ডকুমেন্ট একসাথে ব্যাকআপ বা রিস্টোর করুন</div>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" id="btnFullBackup">⬇️ Full Backup</button>
+                        <button class="btn btn-warning" id="btnFullRestore">⬆️ Full Restore</button>
+                    </div>
+                </div>
+
+                <div class="grid-2" style="gap:14px;margin-bottom:16px;">
+                    <div style="background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🛍️ পণ্য তালিকা (Products)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-primary btn-sm" style="flex:1;" id="exportProductsJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="products">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🧾 ইনভয়েস (Invoices)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-success btn-sm" style="flex:1;" id="exportInvoicesJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="invoices">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">👥 ইউজার ও MPO (Users)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm" style="border-color:rgba(124,58,237,0.4);color:var(--purple2);flex:1;" id="exportUsersJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="users">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">📦 স্টক ডেটা (Stocks)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-warning btn-sm" style="flex:1;" id="exportStocksJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="stocks">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🤝 কাস্টমার (Customers)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm" style="background:#ef4444;color:#fff;flex:1;" id="exportCustomersJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="customers">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">⚙️ সেটিংস (Settings)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm" style="background:#64748b;color:#fff;flex:1;" id="exportSettingsJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="settings">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(236,72,153,0.08);border:1px solid rgba(236,72,153,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">📒 নিজস্ব হিসাব (Personal Accounts)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm" style="background:linear-gradient(135deg,var(--pink),#db2777);color:#fff;flex:1;" id="exportPersonalAccountsJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="personal_accounts">⬆️ Restore</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.2);border-radius:11px;padding:16px;">
+                        <div style="font-size:14px;font-weight:700;margin-bottom:12px;">🗑️ ডিলিট রিকোয়েস্ট (Delete Requests)</div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-sm" style="background:linear-gradient(135deg,var(--teal),#0d9488);color:#fff;flex:1;" id="exportDeleteRequestsJsonBtn">⬇️ Export</button>
+                            <button class="btn btn-secondary btn-sm" style="flex:1;" data-import="deleteRequests">⬆️ Restore</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cache Management -->
+        <div class="card mb-24">
+            <div class="card-header"><div class="card-title">🔄 ক্যাশ মেমোরি ব্যবস্থাপনা (IndexedDB ও LocalStorage)</div></div>
+            <div class="card-body">
+                <div id="cacheKeyList" style="margin-bottom:16px;">
+                    <div class="loading-center"><div class="spinner"></div></div>
+                </div>
+                <hr class="divider">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-warning btn-sm" data-clear-type="products">🛍️ Products</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="stocks">📦 Stocks</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="customers">🤝 Customers</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="history">🧾 Sales History</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="monitor">📊 Sales Monitor</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="users">👥 Users & MPO</button>
+                    <button class="btn btn-warning btn-sm" data-clear-type="settings">⚙️ Settings & Stats</button>
+                    <button class="btn btn-danger btn-sm" id="clearAllCacheBtn">⚠️ সব Cache মুছুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="danger-zone">
+            <div class="danger-zone-title">⚠️ Danger Zone</div>
+            <div class="grid-2" style="gap:14px;">
+                <div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Force Global Sync</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">সব ডিভাইসে fresh data ডাউনলোড force করে</div>
+                    <button class="btn btn-warning btn-sm" id="forceGlobalSyncBtn">🔄 Global Force Sync</button>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:4px;">সম্পূর্ণ ডেটা ক্লিন (Factory Reset)</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">⚠️ ওয়েবসাইটের সমস্ত ডেটা স্থায়ীভাবে মুছে ফেলবে (এডমিন আইডি অক্ষত থাকবে)</div>
+                    <button class="btn btn-danger btn-sm" id="deleteAllInvoicesBtn">🗑️ All Data Clean (Warning!)</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="backupStatusMsg" style="margin-top:14px;display:none;" class="badge badge-green"></div>
+
+    </main>
+</div>
+
+<!-- Clean DB Modal -->
+<div id="cleanConfirmModal" class="modal-overlay hidden">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title" style="color:var(--red2);">🗑️ All Data Clean (সতর্কতা!)</div>
+            <button class="modal-close" id="closeCleanModalCross" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">
+                এটি ওয়েবসাইটের ব্যবহৃত সমস্ত কালেকশন ও রেকর্ড মুছে ফেলবে এবং লোকাল ক্যাশ মেমোরি খালি করবে। শুধুমাত্র এডমিন আইডি (নাম ও পাসওয়ার্ড) সুরক্ষিত থাকবে।
+            </p>
+
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);padding:12px;border-radius:10px;margin-bottom:12px;">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+                    <input type="checkbox" id="cleanIncludeProducts" class="clean-checkbox" style="width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--red);">
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:var(--text-primary);">🗑️ পণ্য তালিকাও মুছে ফেলুন (Delete Products)</div>
+                        <div style="font-size:11.5px;color:var(--text-muted);margin-top:5px;line-height:1.5;">
+                            • <strong>আনচেক রাখলে:</strong> শুধু পণ্য তালিকা ও এডমিন আইডি থাকবে, বাকি সব ডেটা মুছে যাবে।<br>
+                            • <strong>চেক রাখলে:</strong> পণ্য সহ সমস্ত কিছু মুছে যাবে, শুধুমাত্র এডমিন আইডি অবশিষ্ট থাকবে।
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div style="margin-top:14px;">
+                <label class="form-label" style="font-size:12px;font-weight:700;color:var(--text-secondary);display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                    <span>🔒 নিশ্চিত করতে এডমিন পাসওয়ার্ড দিন:</span>
+                </label>
+                <div style="position:relative;">
+                    <input type="password" id="cleanAdminPasswordInput" class="form-input" placeholder="এডমিন পাসওয়ার্ড লিখুন..." autocomplete="current-password" style="padding-right:40px;font-size:13px;">
+                    <button type="button" id="toggleCleanPassBtn" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:15px;padding:4px;" title="পাসওয়ার্ড দেখুন">👁️</button>
+                </div>
+                <div id="cleanPassErrorMsg" style="color:var(--red2);font-size:12px;margin-top:6px;display:none;font-weight:600;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="closeCleanModalBtn" type="button">বাতিল</button>
+            <button class="btn btn-danger" id="confirmFullCleanBtn" type="button" style="font-weight:700;">⚠️ নিশ্চিত মুছুন</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="../js/backup.js"></script>
+</body>
+</html>

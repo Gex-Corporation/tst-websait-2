@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.6, viewport-fit=cover, user-scalable=yes, maximum-scale=2.0">
+    <meta name="theme-color" content="#0c1222">
+    <title>Invoice Pro | Dashboard</title>
+    <meta name="description" content="Invoice Pro — Create and manage invoices, products, and sales history.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Mobile App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Invoice Pro">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5968/5968260.png">
+
+    <!-- Firebase SDK (v10.x Modular) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+<div class="invoice-wrapper" id="mainInvoiceWrapper">
+    <div class="invoice-container screen-dark" id="invoiceArea">
+        <div class="header">
+            <div class="left-header">
+                <div class="logo-area">
+                    <img id="logoPreview" alt="Logo">
+                </div>
+                <div class="company-details-box">
+                    <textarea id="companyDetails" class="company-textarea" placeholder="Company Name, Address, Phone"> </textarea>
+                </div>
+                <div class="save-default-wrapper">
+                    <button class="btn-save-default" id="btnSaveDefault"><span class="save-icon">💾</span> Save Default</button>
+                </div>
+            </div>
+
+            <div class="right-header">
+                <div class="invoice-title">INVOICE</div>
+                <div class="meta-row">
+                    <div class="user-info-container">
+                        <label id="usernameDisplay" class="user-display-label"></label>
+                        <button id="logoutBtn" class="btn btn-danger btn-sm no-print logout-btn-mobile">Log Out</button>
+                    </div>
+                    <input type="text" id="invoiceNumber" value="Invoice No 1">
+                </div>
+                <div class="meta-row">
+                    <label>Date:</label>
+                    <input type="text" id="invoiceDate" placeholder="Select Date">
+                </div>
+                <div class="bill-ship-section">
+                    <div class="meta-row suggestion-relative">
+                        <label>Bill To:</label>
+                        <textarea id="billTo" placeholder="Name, Address" rows="2" autocomplete="off"></textarea>
+                        <div id="customerSuggestions" class="suggestion-box no-print"></div>
+                    </div>
+                    <div class="meta-row">
+                        <label>Ship To:</label>
+                        <textarea id="shipTo" placeholder="Shipping Address" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="meta-row">
+                    <label>Phone:</label>
+                    <input type="text" id="phoneField" placeholder="Customer Phone">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total</th>
+                        <th>Remove</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceBody"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary no-print" id="addRowBtn">+ New Row</button>
+
+        <div class="totals">
+            <div class="total-card">
+                <div class="total-display-main no-print">
+                    <span>Grand Total:</span>
+                    <span id="grandTotalMain">BDT 0.00</span>
+                </div>
+                <div class="total-separator-dashed no-print"></div>
+                <select id="currencySelect" class="no-print">
+                    <option value="BDT">BDT</option>
+                    <option value="$">USD</option>
+                    <option value="₹">INR</option>
+                    <option value="€">EURO</option>
+                </select>
+                <div class="discount-field no-print">
+                    <label for="discountPercent">Discount (%):</label>
+                    <input type="number" id="discountPercent" value="0" min="0" max="100" step="1">
+                </div>
+                <div class="print-calculation">
+                    <div class="total-display-main print-only">
+                        <span>Grand Total:</span>
+                        <span id="printGrandTotalTop">BDT 0.00</span>
+                    </div>
+                    <div class="total-separator-dashed print-only"></div>
+                    <div><span>Sub Total:</span> <span id="printSubTotal">BDT 0.00</span></div>
+                    <div><span>Discount (<span id="printDiscountPercent">0</span>%):</span> <span id="printDiscountAmount">- BDT 0.00</span></div>
+                    <div class="total-separator-solid"></div>
+                    <div class="grand-total-row"><span>Grand Total:</span> <span id="printGrandTotal">BDT 0.00</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="invoice-footer">
+            <div class="note-field">
+                <label for="invoiceNote"></label>
+                <textarea id="invoiceNote" rows="2" placeholder="Any necessary notes..."></textarea>
+            </div>
+            <div class="action-buttons">
+                <button id="adminPanelBtn" class="btn btn-warning no-print" style="display:none;">⚙️ Admin Panel</button>
+                <button id="customerLedgerBtn" class="btn btn-info no-print">📒 Customer Ledger</button>
+                <button id="sellHistoryBtn" class="btn btn-primary no-print">📊 Sell History</button>
+                <button id="viewStockBtn" class="btn btn-secondary no-print">📦 স্টক</button>
+                <button id="viewPaymentBtn" class="btn btn-warning no-print">💳 পেমেন্ট</button>
+                <button id="printBtn" class="btn btn-success no-print">🖨️ Print</button>
+            </div>
+        </div>
+
+        <div id="productSearchPopup" class="product-popup">
+            <div class="product-popup-content">
+                <input type="text" id="productSearchInput" placeholder="Search product..." autocomplete="off">
+                <div class="product-list" id="productSearchList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell History Modal -->
+    <div id="sellHistoryModal" class="modal-overlay no-print">
+        <div class="modal-content sell-history-modal">
+            <span class="modal-close" id="closeSellHistoryBtn">&times;</span>
+            <div class="sell-history-header">
+                <h2 class="m-0">📊 Sell History &amp; Accounting</h2>
+                <button id="refreshSellHistoryBtn" class="btn btn-primary btn-sm refresh-accounting-btn" title="Firebase থেকে ডেটা রিফ্রেশ করুন এবং IndexedDB-তে সেভ করুন">🔄 রিফ্রেশ</button>
+            </div>
+            <div id="sellHistoryContainer" class="table-wrapper">
+                <table class="accounting-table">
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Inv Count</th>
+                            <th>Total Sales</th>
+                            <th>Total Paid</th>
+                            <th>Due Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sellHistoryBody"></tbody>
+                </table>
+            </div>
+            <div class="sell-history-invoices-section">
+                <h3>📜 My Invoices</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Date</th><th>Invoice No</th><th>Total Amount</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="sellHistoryInvoicesBody"></tbody>
+                    </table>
+                </div>
+                <div id="sellHistoryLoadMoreContainer" class="sell-history-load-more"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="adminModal" class="modal-overlay no-print">
+        <div class="modal-content admin-modal-content">
+            <span class="modal-close" id="closeAdminBtn">&times;</span>
+            <h2>⚙️ Admin Panel</h2>
+            <div class="admin-tab-container">
+                <button class="admin-tab-btn active" id="monitorTabBtn">📊 Sales Monitor</button>
+                <button class="admin-tab-btn" id="allUserDetailsTabBtn">👤 All MPO,S Details</button>
+                <button class="admin-tab-btn" id="productTabBtn">🛍️ Product Management</button>
+                <button class="admin-tab-btn" id="stockTabBtn">📦 Stock Management</button>
+                <button class="admin-tab-btn" id="userTabBtn">👥 User Management</button>
+                <button class="admin-tab-btn" id="backupTabBtn">🗂️ Backup &amp; Restore</button>
+                <button class="admin-tab-btn" id="settingsTabBtn">⚙️ Settings</button>
+            </div>
+
+            <!-- Monitor Section -->
+            <div id="monitorSection" class="admin-section display-none">
+                <div class="admin-section-header">
+                    <h3>📊 All Users Sales Monitor</h3>
+                    <div class="admin-header-actions">
+                        <button class="btn btn-info btn-sm delete-notif-btn" id="deleteNotifBtn" title="Pending Delete Requests">🔔 Notifications<span id="deleteNotifBadge" class="notif-badge" style="display:none;">0</span></button>
+                        <button class="btn btn-danger btn-sm" id="deleteAllSalesBtn">Delete All</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>User</th><th>Date</th><th>Invoice No</th><th>Total Amount</th><th>Action</th></tr></thead>
+                        <tbody id="monitorTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- All User Details Section -->
+            <div id="allUserDetailsSection" class="admin-section display-none">
+                <div id="userListSubSection">
+                    <h3>👤 All Registered MPO,S</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Username</th><th>Total Sales</th><th>Due</th><th>Action</th></tr></thead>
+                            <tbody id="allUsersDetailTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="singleUserDetailSubSection" class="single-user-detail-section display-none">
+                    <div class="admin-section-header">
+                        <h3 id="detailViewUserName">👤 User Details</h3>
+                        <button class="btn btn-secondary btn-sm" id="backToUserListBtn">⬅️ Back to List</button>
+                    </div>
+
+                    <div class="admin-tab-container sub-tab-container">
+                        <button class="admin-tab-btn active" id="subTabShopInfo">🏪 Seller Shop Info</button>
+                        <button class="admin-tab-btn" id="subTabSalesHistory">📊 Sales History</button>
+                        <button class="admin-tab-btn" id="subTabCacheControl">⚙️ Cache Control</button>
+                    </div>
+
+                    <!-- Sub Tab: Shop Info -->
+                    <div id="subSectionShopInfo" class="sub-admin-section">
+                        <div class="admin-section-header">
+                            <h4>🏪 Saved Shops (Customers)</h4>
+                            <div class="admin-header-actions">
+                                <button class="btn btn-danger btn-sm" id="deleteAllCustomersBtn">Delete All</button>
+                                <label class="btn btn-success btn-sm file-import-label">
+                                    📥 Import Restore
+                                    <input type="file" id="importUserShopInfoFile" accept=".json" class="display-none">
+                                </label>
+                                <button class="btn btn-primary btn-sm" id="downloadUserShopInfoBtn">📥 Download Shop Info</button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Bill To</th><th>Ship To</th><th>Phone</th><th>Action</th></tr></thead>
+                                <tbody id="userShopInfoTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Sub Tab: Sales History -->
+                    <div id="subSectionSalesHistory" class="sub-admin-section display-none">
+                        <h4>📊 Sales History</h4>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead><tr><th>Date</th><th>Invoice No</th><th>Total</th><th>Action</th></tr></thead>
+                                <tbody id="userSalesHistoryTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="userSalesHistoryLoadMoreContainer" style="text-align: center; padding: 10px;"></div>
+                    </div>
+
+                    <!-- Sub Tab: Cache Control -->
+                    <div id="subSectionCacheControl" class="sub-admin-section display-none">
+                        <h4>⚙️ Remote Cache Control</h4>
+                        <div class="cache-control-card">
+                            <p class="cache-control-info">You can remotely clear or restore this user's local browser data.</p>
+                            <div class="cache-control-actions">
+                                <button class="btn btn-danger" id="remoteClearCacheBtn">🧹 Remote Clear Cache</button>
+                                <button class="btn btn-success" id="remoteRestoreCacheBtn">🔄 Force Full Sync (Restore)</button>
+                            </div>
+                            <div id="remoteCacheStatus" class="remote-cache-status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Section -->
+            <div id="productSection" class="admin-section display-none">
+                <h3>🛍️ Product List (Add/Edit/Delete)</h3>
+
+                <div id="productFormContainer" class="product-form-container">
+                    <div class="table-wrapper product-form-table-wrapper">
+                        <table class="product-form-table">
+                            <thead>
+                                <tr class="product-form-header">
+                                    <th class="product-name-th">Product Name</th>
+                                    <th class="product-price-th">Unit Price (Optional)</th>
+                                    <th class="product-action-th"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="productFormBody" class="background-transparent">
+                                <!-- Rows added via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="product-form-footer">
+                        <button class="btn btn-primary btn-sm" id="addNewProductRowBtn">➕ New Row</button>
+                        <div class="product-form-actions">
+                            <button class="btn btn-secondary btn-sm display-none" id="cancelProductEditBtn">Cancel Edit</button>
+                            <button class="btn btn-success" id="saveProductsBtn">Update Product List</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="product-import-export-bar">
+                    <button class="btn btn-primary btn-sm" id="exportProductsTxtBtn">📤 Export Products (TXT)</button>
+                    <label class="btn btn-success btn-sm file-import-label">
+                        📥 Import Products (TXT)
+                        <input type="file" id="importProductsTxtFile" accept=".txt" class="display-none">
+                    </label>
+                    <div id="productImportStatus" class="product-import-status"></div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Product Name</th><th>Price</th><th>Action</th></tr></thead>
+                        <tbody id="productTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stock Section -->
+            <div id="stockSection" class="admin-section display-none">
+                <h3>📦 Stock Management (Stock In/Out)</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Product Name</th><th>Current Stock</th><th>Stock In (+) / Out (-)</th><th>Action</th></tr></thead>
+                        <tbody id="stockTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Management Section -->
+            <div id="userSection" class="admin-section display-none">
+                <h3>👥 User Management (Create New User)</h3>
+                <div class="add-product-form">
+                    <input type="text" id="newRegUsername" placeholder="New Username">
+                    <input type="text" id="newRegPassword" placeholder="Password">
+                    <button class="btn btn-success" id="createUserBtn">Create User</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead><tr><th>Username</th><th>Password</th><th>Action</th></tr></thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Backup Section -->
+            <div id="backupSection" class="admin-section display-none">
+                <h3>🗂️ Backup &amp; Restore System</h3>
+                <p class="settings-info backup-intro">Exports all Firebase collections (users, invoices, products, customers, stocks, settings) plus full local browser cache snapshot.</p>
+                <div class="backup-restore-card">
+                    <div class="backup-actions">
+                        <button class="btn btn-primary" id="exportDataBtn">📤 Export All Data (JSON)</button>
+                        <label class="btn btn-success file-import-label">
+                            📥 Import Restore
+                            <input type="file" id="importFile" accept=".json" class="display-none">
+                        </label>
+                    </div>
+                    <div id="backupStatus" class="backup-status"></div>
+                </div>
+
+                <div class="danger-zone-card">
+                    <h4 class="danger-title">⚠️ Danger Zone</h4>
+                    <p class="danger-info">Warning! Clicking the button below will delete your database data.</p>
+                    <button class="btn btn-danger" id="openCleanModalBtn">🗑️ All Data Clean (Warning!)</button>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settingsSection" class="admin-section display-none">
+                <h3>⚙️ Application Settings</h3>
+
+                <!-- Storage Monitor (Admin Only) -->
+                <div id="storageMonitor" class="storage-monitor-card">
+                    <h4 class="storage-monitor-title">📊 Full Storage Monitor</h4>
+                    <div id="storageDetailsGrid" class="storage-details-grid">
+                        <!-- Dynamic content injected here -->
+                    </div>
+                    <div id="storageKeyDetails" class="storage-key-details"></div>
+                    <div class="total-storage-usage-box">
+                        <div class="total-storage-label">Total Browser Storage Usage</div>
+                        <div id="totalStorageUsage" class="total-storage-value">0.00 MB / 5.00 MB</div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-item">
+                        <h4 class="settings-title">Browser Cache</h4>
+                        <p class="settings-info">If data is not syncing correctly, try clearing the local browser cache.</p>
+                        <button class="btn btn-warning" id="clearCacheBtn">🧹 Clear Local Cache</button>
+                    </div>
+                    <div class="settings-item border-top">
+                        <h4 class="settings-title">Global Synchronization</h4>
+                        <p class="settings-info">Force all users to refresh their local data from the server on their next visit.</p>
+                        <button class="btn btn-primary" id="forceGlobalSyncBtn">🔄 Force Global Sync (All Users)</button>
+                    </div>
+                    <div class="settings-item border-top">
+                        <h4 class="settings-title">Default Configuration</h4>
+                        <p class="settings-info">Save current company details and note as default for all new invoices.</p>
+                        <button class="btn btn-success" id="btnSaveDefaultInSettings">💾 Save Current as Default</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Request Notification Modal -->
+    <div id="deleteNotifModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content delete-notif-modal">
+            <span class="modal-close" id="closeDeleteNotifBtn">&times;</span>
+            <h2>🔔 Pending Delete Requests</h2>
+            <div id="deleteNotifList" class="delete-notif-list"></div>
+        </div>
+    </div>
+
+    <!-- Full Data Clean Confirmation Modal -->
+    <div id="cleanConfirmModal" class="modal-overlay no-print">
+        <div class="modal-content clean-confirm-modal">
+            <h3 class="clean-confirm-title">🗑️ Are you sure?</h3>
+            <p class="clean-confirm-info">This will permanently delete database records and clear all local browser caches on this device (login session is kept).</p>
+
+            <div class="clean-options-box">
+                <label class="clean-option-label">
+                    <input type="checkbox" id="cleanIncludeProducts" class="clean-checkbox">
+                    Also delete all products &amp; company default settings
+                </label>
+            </div>
+
+            <div class="clean-actions">
+                <button class="btn btn-secondary flex-1" id="closeCleanModalBtn">Cancel</button>
+                <button class="btn btn-danger flex-1" id="confirmFullCleanBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==================== Customer Ledger (Tally-style) ==================== -->
+    <div id="customerLedgerModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content khata-modal">
+
+            <!-- Header -->
+            <div class="khata-header">
+                <div class="khata-title-row">
+                    <span class="khata-title">📒 আমার খাতা</span>
+                    <button class="btn khata-icon-btn" id="ledgerRefreshBtn" title="Firebase থেকে রিফ্রেশ করুন">🔄 রিফ্রেশ করুন</button>
+                    <button class="btn khata-icon-btn khata-detect-btn" id="autoDetectCustomerBtn" title="বাদ পড়া কাস্টমার খুঁজুন">🔍 অটো ডিটেক্ট</button>
+                    <button class="btn btn-success btn-sm" id="addNewCustomerBtn">+ নতুন কাস্টমার</button>
+                    <span class="modal-close khata-close-btn" id="closeCustomerLedgerBtn">&times;</span>
+                </div>
+                <input type="text" id="ledgerSearchInput" class="khata-search" placeholder="🔍 নাম বা ফোন দিয়ে খুঁজুন..." autocomplete="off">
+            </div>
+
+            <!-- Total Summary Strip -->
+            <div class="khata-total-strip" id="ledgerSummaryBar"></div>
+
+            <!-- Customer Cards -->
+            <div class="khata-cards-container" id="customerLedgerBody">
+                <div class="khata-loading">লোড হচ্ছে...</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== Customer Profile (Tally-style) ==================== -->
+    <div id="customerProfileModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content khata-profile-modal">
+
+            <!-- Profile Header -->
+            <div class="khata-profile-header" id="customerProfileInfo">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Big Balance Display -->
+            <div class="khata-balance-display" id="profileSummaryBar">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Action Buttons — Tally Style -->
+            <div class="khata-action-row" id="profileActionRow">
+                <button id="addCollectionBtn" class="khata-btn khata-btn-nilam">
+                    <span class="khata-btn-icon">💵</span>
+                    <span class="khata-btn-label">নিলাম</span>
+                    <span class="khata-btn-sub">(টাকা পেলাম)</span>
+                </button>
+                <button id="addManualSaleBtn" class="khata-btn khata-btn-dilam">
+                    <span class="khata-btn-icon">🛒</span>
+                    <span class="khata-btn-label">দিলাম</span>
+                    <span class="khata-btn-sub">(পণ্য দিলাম)</span>
+                </button>
+            </div>
+
+            <!-- Transaction List -->
+            <div class="khata-txn-header">
+                <span>লেনদেন ইতিহাস</span>
+                <button class="btn btn-secondary btn-sm" id="backToLedgerBtn">⬅ ফিরে যাও</button>
+            </div>
+            <div class="khata-txn-list" id="customerTransactionBody">
+                <!-- Filled by JS -->
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== Add Transaction Modal ==================== -->
+    <div id="addTransactionModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content add-txn-modal">
+            <span class="modal-close" id="closeAddTxnBtn">&times;</span>
+            <h3 id="addTxnTitle">💵 নিলাম (টাকা পেলাম)</h3>
+            <div class="add-txn-form">
+                <div class="txn-form-group">
+                    <label>পরিমাণ (টাকা)</label>
+                    <input type="number" id="txnAmount" placeholder="0" min="1" step="1" inputmode="numeric">
+                </div>
+                <div class="txn-form-group">
+                    <label>তারিখ</label>
+                    <input type="date" id="txnDate">
+                </div>
+                <div class="txn-form-group">
+                    <label>নোট (ঐচ্ছিক)</label>
+                    <input type="text" id="txnNote" placeholder="যেমন: সাপ্তাহিক কালেকশন">
+                </div>
+                <div class="add-txn-actions">
+                    <button class="btn btn-secondary" id="cancelTxnBtn">বাতিল</button>
+                    <button class="btn btn-success" id="saveTxnBtn">✓ সেভ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Add/Edit Customer Modal ==================== -->
+    <div id="addEditCustomerModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content add-txn-modal">
+            <span class="modal-close" id="closeAddEditCustomerBtn">&times;</span>
+            <h3 id="addEditCustomerTitle">👤 নতুন কাস্টমার</h3>
+            <div class="add-txn-form">
+                <div class="txn-form-group">
+                    <label>নাম *</label>
+                    <input type="text" id="custEditName" placeholder="কাস্টমারের নাম">
+                </div>
+                <div class="txn-form-group">
+                    <label>ফোন নম্বর</label>
+                    <input type="tel" id="custEditPhone" placeholder="01XXXXXXXXX" inputmode="tel">
+                </div>
+                <div class="txn-form-group">
+                    <label>ঠিকানা</label>
+                    <input type="text" id="custEditAddress" placeholder="বিস্তারিত ঠিকানা">
+                </div>
+                <div class="add-txn-actions">
+                    <button class="btn btn-secondary" id="cancelAddEditCustomerBtn">বাতিল</button>
+                    <button class="btn btn-success" id="saveCustomerInfoBtn">✓ সেভ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== Admin Customer Ledger Modal ==================== -->
+    <div id="adminLedgerModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content admin-ledger-modal">
+
+            <!-- Header -->
+            <div class="khata-header">
+                <div class="khata-title-row">
+                    <button class="btn btn-secondary btn-sm" id="adminLedgerBackBtn" style="display:none;">⬅ ফিরে যাও</button>
+                    <span class="khata-title" id="adminLedgerTitle">📒 সকল ইউজারের খাতা</span>
+                    <button class="btn khata-icon-btn" id="adminLedgerRefreshBtn" title="Firebase থেকে রিফ্রেশ করুন" style="display:none;">🔄 রিফ্রেশ করুন</button>
+                    <span class="modal-close khata-close-btn" id="closeAdminLedgerBtn">&times;</span>
+                </div>
+                <input type="text" id="adminLedgerSearch" class="khata-search" placeholder="🔍 খুঁজুন..." autocomplete="off" style="display:none;">
+            </div>
+
+            <!-- Summary -->
+            <div class="khata-total-strip" id="adminLedgerSummary" style="display:none;"></div>
+
+            <!-- Content area (user list or customer list) -->
+            <div class="khata-cards-container" id="adminLedgerContent">
+                <div class="khata-loading">লোড হচ্ছে...</div>
+            </div>
+
+        </div>
+    </div>
+
+</div><!-- /.invoice-wrapper -->
+
+    <!-- ==================== User Stock View Modal ==================== -->
+    <style>
+        #userStockModal .modal-content {
+            max-width: 450px;
+            padding: 20px 15px;
+            background: var(--bg2, #1e1e1e);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--border, #333);
+        }
+        #userStockModal h3 {
+            text-align: center;
+            color: var(--text, #fff);
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border, #333);
+            padding-bottom: 10px;
+        }
+        .stock-list-container {
+            max-height: 65vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .stock-list-container::-webkit-scrollbar { width: 6px; }
+        .stock-list-container::-webkit-scrollbar-track { background: var(--bg, #121212); border-radius: 4px; }
+        .stock-list-container::-webkit-scrollbar-thumb { background: var(--border, #333); border-radius: 4px; }
+        
+        .stock-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg, #121212);
+            margin-bottom: 10px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border, #333);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .stock-list-item:hover {
+            background: var(--border, #333);
+        }
+        .stock-name {
+            flex: 1;
+            text-align: center;
+            font-size: 1rem;
+            color: var(--text, #fff);
+            font-weight: 500;
+        }
+        .stock-qty {
+            background: rgba(52, 152, 219, 0.15);
+            color: #4facfe;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            min-width: 55px;
+            text-align: center;
+        }
+        .stock-qty.low-stock {
+            background: rgba(231, 76, 60, 0.15);
+            color: #e74c3c;
+        }
+    </style>
+    <div id="userStockModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content">
+            <span class="modal-close" id="closeUserStockBtn">&times;</span>
+            <h3 style="margin-top:0; display:flex; justify-content:center; align-items:center; gap:10px;">
+                📦 বর্তমান স্টক তালিকা
+                <button id="refreshUserStockBtn" class="btn btn-sm btn-secondary" style="padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">🔄</button>
+            </h3>
+            <div id="userStockList" class="stock-list-container">
+                <!-- Javascript will inject list items here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== User Payment Info Modal ==================== -->
+    <div id="userPaymentModal" class="modal-overlay no-print" style="display:none;">
+        <div class="modal-content" style="max-width:500px; text-align:center;">
+            <span class="modal-close" id="closeUserPaymentBtn">&times;</span>
+            <h3 style="margin-top:0;">💳 পেমেন্ট তথ্য</h3>
+            <div id="userPaymentMessage" style="font-size:16px; line-height:1.6; white-space:pre-wrap; margin:20px 0; padding:15px; background:rgba(255,255,255,0.05); border-radius:8px;">
+                লোড হচ্ছে...
+            </div>
+            <button class="btn btn-primary" id="btnUnderstandPayment">ঠিক আছে</button>
+        </div>
+    </div>
+
+</div><!-- /#app -->
+
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
