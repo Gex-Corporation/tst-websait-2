@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>নিজস্ব হিসাব — Invoice Pro</title>
+    <meta name="description" content="মালিকের নিজস্ব দিলাম-পেলাম হিসাব — Invoice Pro">
+    <link rel="stylesheet" href="../css/pages.css">
+    <link rel="stylesheet" href="../css/personal.css">
+    <script type="importmap">{"imports":{"firebase/app":"https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js","firebase/firestore":"https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"}}</script>
+</head>
+<body>
+<div id="pageApp">
+    <header id="pageTopbar"></header>
+    <main id="pageContent">
+
+        <!-- PASSWORD GATE -->
+        <div id="passwordGate" class="gate-overlay hidden">
+            <div class="gate-card">
+                <div class="gate-icon">🔐</div>
+                <h2 class="gate-title">নিজস্ব হিসাব</h2>
+                <p class="gate-subtitle">এই পেজটি পাসওয়ার্ড দ্বারা সুরক্ষিত</p>
+                <div class="gate-checking" id="gateChecking">
+                    <div class="spinner-sm"></div> Firebase যাচাই হচ্ছে...
+                </div>
+                <div id="gateForm" class="hidden" style="width:100%;">
+                    <div class="form-group" style="margin-top:16px;">
+                        <div class="pass-input-wrap">
+                            <input type="text" id="gatePasswordInput" class="form-input gate-input masked-input" data-masked="true" placeholder="পাসওয়ার্ড দিন..." autocomplete="off" spellcheck="false">
+                            <button class="eye-toggle" data-target="gatePasswordInput" type="button" title="দেখুন">👁</button>
+                        </div>
+                    </div>
+                    <div class="gate-error hidden" id="gateError">❌ ভুল পাসওয়ার্ড!</div>
+                    <button class="btn btn-primary gate-btn" id="gateSubmitBtn">🔓 প্রবেশ করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div id="personalMain">
+            <div class="stats-grid mb-24">
+                <div class="stat-card purple"><div class="stat-card-top"><div><div class="stat-label">মোট ব্যক্তি</div><div class="stat-value" id="statTotalPersons">—</div></div><div class="stat-icon">👥</div></div></div>
+                <div class="stat-card orange"><div class="stat-card-top"><div><div class="stat-label">আমি পাব</div><div class="stat-value" id="statTotalReceivable">—</div></div><div class="stat-icon">📤</div></div></div>
+                <div class="stat-card red"><div class="stat-card-top"><div><div class="stat-label">আমি দেব</div><div class="stat-value" id="statTotalPayable">—</div></div><div class="stat-icon">📥</div></div></div>
+                <div class="stat-card teal"><div class="stat-card-top"><div><div class="stat-label">নেট ব্যালেন্স</div><div class="stat-value" id="statNetBalance">—</div></div><div class="stat-icon">⚖️</div></div></div>
+            </div>
+            <div class="section-header">
+                <div class="section-title">📔 হিসাবের তালিকা</div>
+                <div class="section-actions" style="flex-wrap:wrap;">
+                    <div class="search-bar"><input type="text" id="personalSearch" placeholder="নাম বা ফোন খুঁজুন..."></div>
+                    <select class="filter-select" id="balanceFilter">
+                        <option value="">সবাই</option>
+                        <option value="receivable">আমি পাব</option>
+                        <option value="payable">আমি দেব</option>
+                        <option value="clear">পরিশোধিত</option>
+                    </select>
+                    <button class="btn btn-success" id="addPersonBtn">➕ নতুন ব্যক্তি</button>
+                    <button class="btn" id="personalSettingsBtn" title="সেটিংস">⚙️</button>
+                </div>
+            </div>
+            <div class="grid-auto" id="personalGrid">
+                <div class="loading-center" style="grid-column:1/-1;min-height:200px"><div class="spinner"></div><span>লোড হচ্ছে...</span></div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ADD / EDIT PERSON MODAL -->
+<div class="modal-overlay hidden" id="addPersonModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title" id="addPersonTitle">➕ নতুন ব্যক্তি</div>
+            <button class="modal-close" id="closeAddPersonModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editPersonId">
+            <div class="form-group"><label class="form-label">নাম (আবশ্যক)</label><input type="text" class="form-input" id="personName" placeholder="ব্যক্তির নাম"></div>
+            <div class="form-group"><label class="form-label">ফোন নম্বর</label><input type="tel" class="form-input" id="personPhone" placeholder="০১X-XXXXXXXX"></div>
+            <div class="form-group"><label class="form-label">ঠিকানা / পরিচয়</label><input type="text" class="form-input" id="personAddress" placeholder="ঠিকানা বা পরিচয়"></div>
+            <div class="form-group"><label class="form-label">নোট</label><textarea class="form-input" id="personNote" rows="2" placeholder="ঐচ্ছিক নোট..."></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelAddPersonBtn">বাতিল</button>
+            <button class="btn btn-primary" id="savePersonBtn">✅ সেভ করুন</button>
+        </div>
+    </div>
+</div>
+
+<!-- PERSON PROFILE MODAL -->
+<div class="modal-overlay hidden" id="personProfileModal">
+    <div class="modal-box wide">
+        <div class="modal-header">
+            <div class="modal-title" id="profileTitle">📔 হিসাব বিবরণ</div>
+            <button class="modal-close" id="closeProfileModal">✕</button>
+        </div>
+        <div class="modal-body" id="profileBody"></div>
+    </div>
+</div>
+
+<!-- ADD TRANSACTION MODAL -->
+<div class="modal-overlay hidden" id="addTxnModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title" id="txnModalTitle">💰 লেনদেন যোগ করুন</div>
+            <button class="modal-close" id="closeTxnModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="txn-type-row">
+                <button class="txn-type-btn active" id="txnTypeDilam" data-type="dilam">📤 দিলাম<span class="txn-type-hint">আমি দিলাম / বিক্রি করলাম</span></button>
+                <button class="txn-type-btn" id="txnTypePelam" data-type="pelam">📥 পেলাম<span class="txn-type-hint">আমি পেলাম / কিনলাম / পরিশোধ</span></button>
+            </div>
+            <div class="form-group" style="margin-top:16px;"><label class="form-label">পরিমাণ (আবশ্যক)</label><input type="number" class="form-input" id="txnAmount" placeholder="০" min="0" step="0.01"></div>
+            <div class="form-group"><label class="form-label">পণ্য / কারণ</label><input class="form-input" id="txnItem" placeholder="কী কারণে লেনদেন?"></div>
+            <div class="form-group"><label class="form-label">তারিখ</label><input type="date" class="form-input" id="txnDate"></div>
+            <div class="form-group"><label class="form-label">নোট (ঐচ্ছিক)</label><input class="form-input" id="txnNote" placeholder="বিস্তারিত লিখুন"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelTxnBtn">বাতিল</button>
+            <button class="btn btn-primary" id="saveTxnBtn">✅ সেভ</button>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal-box narrow">
+        <div class="modal-header">
+            <div class="modal-title">⚙️ পেজ সেটিংস</div>
+            <button class="modal-close" id="closeSettingsModal">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-section">
+                <div class="settings-label">🔐 পাসওয়ার্ড সুরক্ষা</div>
+                <div class="settings-desc">পাসওয়ার্ড Firebase-এ সংরক্ষিত হয়। সব ডিভাইস থেকে একই পাসওয়ার্ড কাজ করবে।</div>
+                <div class="settings-toggle-row">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="passwordToggle" class="toggle-input">
+                        <span class="toggle-track"></span>
+                        <span class="toggle-text">পাসওয়ার্ড চালু করুন</span>
+                    </label>
+                </div>
+
+                <div id="passwordSetArea" class="hidden" style="margin-top:16px;">
+                    <!-- Current pass hint -->
+                    <div class="current-pass-hint" id="currentPassHint" style="display:none;">
+                        <span>✅ পাসওয়ার্ড সেট আছে। নতুন পাসওয়ার্ড দিলে পরিবর্তন হবে।</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">নতুন পাসওয়ার্ড</label>
+                        <div class="pass-input-wrap">
+                            <input type="text" class="form-input masked-input" id="newPasswordInput" data-masked="true" placeholder="পাসওয়ার্ড দিন" autocomplete="off" spellcheck="false">
+                            <button class="eye-toggle" data-target="newPasswordInput" type="button" title="দেখুন">👁</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">পাসওয়ার্ড নিশ্চিত করুন</label>
+                        <div class="pass-input-wrap">
+                            <input type="text" class="form-input masked-input" id="confirmPasswordInput" data-masked="true" placeholder="আবার দিন" autocomplete="off" spellcheck="false">
+                            <button class="eye-toggle" data-target="confirmPasswordInput" type="button" title="দেখুন">👁</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="savePasswordBtn" style="width:100%;margin-top:4px;">✅ পাসওয়ার্ড সেট করুন</button>
+                    <button class="btn btn-danger" id="removePasswordBtn" style="width:100%;margin-top:8px;display:none;">🗑️ পাসওয়ার্ড সরিয়ে দিন</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn" id="closeSettingsBtnFooter">বন্ধ করুন</button></div>
+    </div>
+</div>
+
+<script type="module" src="../js/personal.js"></script>
+</body>
+</html>

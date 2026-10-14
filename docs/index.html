@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.6, viewport-fit=cover, user-scalable=yes, maximum-scale=2.0">
+    <meta name="theme-color" content="#060b18">
+    <title>Invoice Pro | Login</title>
+    <meta name="description" content="Secure login to Invoice Pro — GEX Corporation invoice management system.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Mobile App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Invoice Pro">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5968/5968260.png">
+
+    <!-- Firebase SDK (v10.x Modular) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div id="app">
+        <div id="loginOverlay">
+            <!-- Floating ambient orb -->
+            <div class="login-orb"></div>
+
+            <div class="login-card">
+                <!-- Brand / Logo -->
+                <div class="login-brand">
+                    <div class="login-logo">🧾</div>
+                    <h1>Invoice Pro</h1>
+                    <p>GEX Corporation · Management System</p>
+                </div>
+
+                <!-- Username -->
+                <div class="input-group">
+                    <input
+                        type="text"
+                        id="loginUsername"
+                        placeholder="Username"
+                        autocomplete="username"
+                    >
+                    <span class="input-icon">👤</span>
+                </div>
+
+                <!-- Password -->
+                <div class="input-group">
+                    <input
+                        type="password"
+                        id="loginPassword"
+                        placeholder="Password"
+                        autocomplete="current-password"
+                    >
+                    <span class="input-icon">🔑</span>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="remember-me-row">
+                    <input type="checkbox" id="rememberMe">
+                    <label for="rememberMe">Remember Me</label>
+                </div>
+
+                <!-- Login Button -->
+                <button id="loginBtn">Login</button>
+
+                <!-- Status / Error -->
+                <div id="loginError" class="login-error"></div>
+
+                <!-- Footer -->
+                <div class="login-footer">
+                    <div class="login-footer-dot"></div>
+                    <span>Data verified · GEX Corporation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/login.js"></script>
+</body>
+</html>

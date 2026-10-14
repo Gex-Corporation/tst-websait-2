@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পণ্য ব্যবস্থাপনা — Invoice Pro</title>
+    <meta name="description" content="পণ্য যোগ, সম্পাদনা ও মুছে ফেলুন — Invoice Pro Admin">
+    <link rel="stylesheet" href="../css/pages.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app":       "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+</head>
+<body>
+<div id="pageApp">
+    <header id="pageTopbar"></header>
+
+    <main id="pageContent">
+
+        <!-- Stats -->
+        <div class="stats-grid mb-24">
+            <div class="stat-card blue">
+                <div class="stat-card-top">
+                    <div><div class="stat-label">মোট পণ্য</div><div class="stat-value" id="statProductCount">—</div></div>
+                    <div class="stat-icon">🛍️</div>
+                </div>
+                <div class="stat-footer">সক্রিয় পণ্য</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-card-top">
+                    <div><div class="stat-label">সর্বোচ্চ মূল্য</div><div class="stat-value" id="statMaxPrice">—</div></div>
+                    <div class="stat-icon">💰</div>
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-card-top">
+                    <div><div class="stat-label">গড় মূল্য</div><div class="stat-value" id="statAvgPrice">—</div></div>
+                    <div class="stat-icon">📊</div>
+                </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-card-top">
+                    <div><div class="stat-label">নতুন (আজ)</div><div class="stat-value" id="statNewToday">—</div></div>
+                    <div class="stat-icon">✨</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2 collapse">
+
+            <!-- ====== LEFT: Product Table ====== -->
+            <div style="grid-column:1/-1;">
+                <div class="section-header">
+                    <div class="section-title">🛍️ পণ্য তালিকা</div>
+                    <div class="section-actions" style="flex-wrap:wrap;">
+                        <div class="search-bar">
+                            <input type="text" id="productSearch" placeholder="পণ্যের নাম খুঁজুন...">
+                        </div>
+                        <button class="btn btn-primary" id="openAddProductBtn">➕ নতুন পণ্য</button>
+                        <button class="btn btn-success" id="exportProductsBtn"><span class="btn-label-full">⬇️ Export TXT</span><span class="btn-label-short" style="display:none;">⬇️ Export</span></button>
+                        <label class="btn" style="cursor:pointer;">
+                            <span class="btn-label-full">⬆️ Import TXT</span><span class="btn-label-short" style="display:none;">⬆️ Import</span> <input type="file" id="importProductsInput" accept=".txt" style="display:none">
+                        </label>
+                        <button class="btn" id="productsRefreshBtn">🔄</button>
+                    </div>
+                </div>
+
+                <div id="importStatus" style="display:none;margin-bottom:14px;" class="badge badge-blue"></div>
+
+                <div class="card">
+                    <div class="card-body no-pad">
+                        <div class="table-wrap">
+                            <table class="data-table" id="productTable">
+                                <thead><tr>
+                                    <th>#</th>
+                                    <th>পণ্যের নাম</th>
+                                    <th>মূল্য</th>
+                                    <th>স্ট্যাটাস</th>
+                                    <th>অ্যাকশন</th>
+                                </tr></thead>
+                                <tbody id="productTableBody">
+                                    <tr><td colspan="5"><div class="loading-center"><div class="spinner"></div><span>লোড হচ্ছে...</span></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ====== SINGLE EDIT PRODUCT MODAL ====== -->
+<div class="modal-overlay hidden" id="productModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-title" id="productModalTitle">✏️ পণ্য সম্পাদনা</div>
+            <button class="modal-close" id="closeProductModal" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editProductId">
+            <div class="form-group mb-16">
+                <label class="form-label">পণ্যের নাম</label>
+                <input type="text" class="form-input" id="productNameInput" placeholder="পণ্যের নাম লিখুন">
+            </div>
+            <div class="form-group">
+                <label class="form-label">মূল্য (BDT)</label>
+                <input type="number" class="form-input" id="productPriceInput" placeholder="০" step="0.01" min="0">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelProductModal" type="button">বাতিল</button>
+            <button class="btn btn-primary" id="saveProductBtn" type="button">✅ আপডেট করুন</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====== MULTI-PRODUCT ADD MODAL ====== -->
+<div class="modal-overlay hidden" id="bulkAddModal">
+    <div class="modal-box wide product-bulk-modal">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">➕ নতুন পণ্য যোগ করুন</div>
+                <div class="modal-subtitle" style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+                    একসাথে একাধিক পণ্য ও মূল্য লিখে সেভ করুন
+                </div>
+            </div>
+            <button class="modal-close" id="closeBulkAdd" type="button">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="bulk-table-header" style="display:flex;gap:10px;padding:0 4px 8px 4px;border-bottom:1px solid var(--border);margin-bottom:12px;font-size:12px;font-weight:600;color:var(--text-muted);">
+                <span style="flex:2;">পণ্যের নাম</span>
+                <span style="flex:1;">মূল্য (BDT)</span>
+                <span style="width:36px;text-align:center;">মুছুন</span>
+            </div>
+            <div id="bulkProductRows" class="bulk-rows-container">
+                <!-- rows added dynamically -->
+            </div>
+            <div class="bulk-actions-bar" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:10px;border-top:1px dashed var(--border);">
+                <button type="button" class="btn btn-secondary btn-sm" id="addBulkRowBtn" style="display:inline-flex;align-items:center;gap:6px;">
+                    <span>➕</span> Add Row (আরেকটি পণ্য)
+                </button>
+                <span id="bulkRowCountBadge" class="badge badge-blue">৩টি সারি</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" id="cancelBulkAdd" type="button">বাতিল</button>
+            <button class="btn btn-primary" id="saveBulkProductsBtn" type="button">✅ সব পণ্য সেভ করুন</button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="../js/products.js"></script>
+</body>
+</html>
